@@ -59,6 +59,19 @@ def create(indir, outdir):
             assert np.array_equal(output['Total_Pop'].values,
                                   np.sum(output[['NH_White_alone', 'NH_Black_alone', 'NH_API_alone', 'NH_AIAN_alone', 'NH_Mult_Total', 'NH_Other_alone', 'Hispanic_Total']], axis=1).values)
 
+            # Step 3: Proportionally redistribute Non-Hispanic Other population
+            # to remaining Non-Hispanic groups within each block.
+            for var in ['NH_White_alone', 'NH_Black_alone', 'NH_AIAN_alone', 'NH_API_alone', 'NH_Mult_Total']:
+                output[var] = output[var] + (output[var] / (output['Total_Pop'] - np.sum(
+                    output[['Hispanic_Total', 'NH_Other_alone']], axis=1))) * output['NH_Other_alone']
+                output[output['Total_Pop'] == 0][var] = 0
+                output[output['Non_Hispanic_Total'] == output['NH_Other_alone']][
+                    var] = output['NH_Other_alone'] / 5
+
+            # Verify the steps above by confirming that all sole-ethnicities sum to the total population.
+            assert np.array_equal(output['Total_Pop'].values,
+                                  round(np.sum(output[['NH_White_alone', 'NH_Black_alone', 'NH_AIAN_alone', 'NH_API_alone', 'NH_Mult_Total', 'Hispanic_Total']], axis=1)).values)
+
         else:
             print("{}.pkl already exists.".format(
                 os.path.join(outdir, geo_file)))
