@@ -7,6 +7,7 @@ used to build the BISG proxy.
 
 
 import os
+import numpy as np
 import pandas as pd
 
 
@@ -20,21 +21,44 @@ def create(indir, outdir):
             raw_in = pd.read_stata(os.path.join(indir, geo_file + '.dta'))
 
             # Step 1: From the SF1, retain population contiguous U.S., Alaska,
-            # and Hawaii in order to ensure consistency with the population covered by the census surname list.
-            print("Initial Number of State_FIPS10 == 72: {}".format((raw_in['State_FIPS10'] == '72').sum()))
+            # and Hawaii in order to ensure consistency with the population
+            # covered by the census surname list.
+            print("Initial Number of State_FIPS10 == 72: {}".format(
+                (raw_in['State_FIPS10'] == '72').sum()))
             output = raw_in[raw_in['State_FIPS10'] != "72"]
-            print("Updated Number of State_FIPS10 == 72: {}".format((output['State_FIPS10'] == '72').sum()))
+            print("Updated Number of State_FIPS10 == 72: {}".format(
+                (output['State_FIPS10'] == '72').sum()))
 
-            
             if geo_file == 'zip' + file_stem:
-                print('Initial Number of ZCTA5s beginning with "006","007","008","009": {}'.format((raw_in['State_FIPS10'].apply(lambda x: x[:3] in ["006", "007", "008", "009"])).sum()))
-                output = raw_in[(raw_in['ZCTA5'].apply(lambda x: x[:3] not in ["006", "007", "008", "009"]))]
-                print('Updated Number of ZCTA5s beginning with "006","007","008","009": {}'.format((output['State_FIPS10'].apply(lambda x: x[:3] in ["006", "007", "008", "009"])).sum()))
+                print('Initial Number of ZCTA5s beginning with "006","007","008","009": {}'.format(
+                    (raw_in['State_FIPS10'].apply(lambda x: x[:3] in ["006", "007", "008", "009"])).sum()))
+                output = raw_in[(raw_in['ZCTA5'].apply(
+                    lambda x: x[:3] not in ["006", "007", "008", "009"]))]
+                print('Updated Number of ZCTA5s beginning with "006","007","008","009": {}'.format(
+                    (output['State_FIPS10'].apply(lambda x: x[:3] in ["006", "007", "008", "009"])).sum()))
 
-            # Step 2: Address "Other" category from 2010 Census; what is done here follows Word(2008).
+            # Step 2: Address "Other" category from 2010 Census; what is done
+            # here follows Word(2008).
 
-            for var in []
+            for var in ['NH_White', 'NH_Black', 'NH_AIAN', 'NH_API']:
+                output[var + "_alone"] = output[var +
+                                                "_alone"] + output[var + "_Other"]
 
+            # Census breaks out Asian and PI separately; since we consider them
+            # as one, we correct for this.
+            output['NH_API_alone'] = output['NH_API_alone'] + \
+                output['NH_Asian_HPI'] + output['NH_Asian_HPI_Other']
+
+            # Replace multiracial total to account for the fact that we have
+            # suppressed the Other category.
+            output['NH_Mult_Total'] = output['NH_Mult_Total'] - (np.sum(
+                output[['NH_White_Other', 'NH_Black_Other', 'NH_AIAN_Other', 'NH_Asian_HPI', 'NH_API_Other', 'NH_Asian_HPI_Other']], axis=1))
+
+            # Verify the steps above by confirming that the Total Population
+            # still matches.
+            assert np.array_equal(output['Total_Pop'].values,
+                                  np.sum(output[['NH_White_alone', 'NH_Black_alone', 'NH_API_alone', 'NH_AIAN_alone', 'NH_Mult_Total', 'NH_Other_alone', 'Hispanic_Total']], axis=1).values)
 
         else:
-            print("{}.pkl already exists.".format(os.path.join(outdir, geo_file)))
+            print("{}.pkl already exists.".format(
+                os.path.join(outdir, geo_file)))
