@@ -10,7 +10,7 @@ fictitious sample data cannot be used to test the accuracy of the proxy.
 """
 
 import pandas as pd
-from numpy.random import choice, seed
+from numpy.random import choice, uniform, seed
 
 
 # Read in surname data and take a random draw of 100 individuals for
@@ -67,4 +67,22 @@ seed(121314)
 draw = choice(zip_df.shape[0], zip_df.shape[0], replace=False)
 zip_sample = zip_df[draw < 100]['ZCTA5'].reset_index(drop=True)
 
-sample_data = pd.DataFrame([name1, name2, geo_sample, zip_df])
+# Randomly assign a fictitious precision value for geocoding
+seed(151617)
+
+
+def create_geo_code_precision(runi):
+    if runi < 0.90:
+        return "USAStreetAddr"
+    elif runi < 0.95:
+        return "USAStreetName"
+    elif runi < 0.97:
+        return "USAZIP4"
+    else:
+        return "USAZipcode"
+
+
+geo_code_precision = pd.Series(uniform(size=name1.shape[0])).apply(create_geo_code_precision)
+
+sample_data = pd.DataFrame(dict(name1=name1, name2=name2, zip_sample=zip_sample, geo_code_precision=geo_code_precision)).join(geo_sample)
+sample_data.to_pickle('../test_output/fictitious_sample_data.pkl')
