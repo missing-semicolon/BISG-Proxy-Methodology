@@ -54,6 +54,8 @@ def create(indir, outdir):
             output['NH_Mult_Total'] = output['NH_Mult_Total'] - (np.sum(
                 output[['NH_White_Other', 'NH_Black_Other', 'NH_AIAN_Other', 'NH_Asian_HPI', 'NH_API_Other', 'NH_Asian_HPI_Other']], axis=1))
 
+            print(output['NH_Mult_Total'])
+
             # Verify the steps above by confirming that the Total Population
             # still matches.
             assert np.array_equal(output['Total_Pop'].values,
@@ -68,10 +70,52 @@ def create(indir, outdir):
                 output[output['Non_Hispanic_Total'] == output['NH_Other_alone']][
                     var] = output['NH_Other_alone'] / 5
 
-            # Verify the steps above by confirming that all sole-ethnicities sum to the total population.
+            # Verify the steps above by confirming that all sole-ethnicities
+            # sum to the total population.
             assert np.array_equal(output['Total_Pop'].values,
                                   round(np.sum(output[['NH_White_alone', 'NH_Black_alone', 'NH_AIAN_alone', 'NH_API_alone', 'NH_Mult_Total', 'Hispanic_Total']], axis=1)).values)
 
+            # Collapse dataset to et the Population Totals for each group.
+            pop_totals_df = output[['NH_White_alone', 'NH_Black_alone', 'NH_AIAN_alone',
+                                    'NH_API_alone', 'NH_Mult_Total', 'Hispanic_Total', 'Total_Pop']].sum()
+
+            output[['geo_pr_white', 'geo_pr_black', 'geo_pr_aian', 'geo_pr_api']] = output[
+                ['NH_White_alone', 'NH_Black_alone', 'NH_AIAN_alone', 'NH_API_alone']].apply(lambda x: x / output['Total_Pop'])
+
+            # Multiple races or "some other race" (and not Hispanic).
+            output['geo_pr_mult_other'] = output['NH_Mult_Total'] / output['Total_Pop']
+            output['geo_pr_hispanic'] = output[
+                'Hispanic_Total'] / output['Total_Pop']
+
+            # When updating geocoded race probabilities, we require the probability that someone of a particular race lives in that block group, tract, or ZIP code.
+            # Our race counts are single race reported counts, therefore we divide the single race population within each block by the total single race population
+            # for each group.
+
+            pop_totals_df['NH_Mult_Total'] = pop_totals_df[-1] - \
+                pop_totals_df[:-1].sum()
+
+            output['here'] = output['Total_Pop'] / \
+                pop_totals_df['Total_Pop']
+            output['here_given_white'] = output['NH_White_alone'] / \
+                pop_totals_df['NH_White_alone']
+            output['here_given_black'] = output['NH_Black_alone'] / \
+                pop_totals_df['NH_Black_alone']
+            output['here_given_aian'] = output['NH_AIAN_alone'] / \
+                pop_totals_df['NH_AIAN_alone']
+            output['here_given_api'] = output['NH_API_alone'] / \
+                pop_totals_df['NH_API_alone']
+            output['here_given_mult_other'] = output['NH_Mult_Total'] / \
+                pop_totals_df['NH_Mult_Total']
+            output['here_given_hispanic'] = output['Hispanic_Total'] / \
+                pop_totals_df['Hispanic_Total']
+
+            print("Renaming {} to GeoInd.".format(output.columns[0]))
+            output.rename(columns={output.columns[0]: 'GeoInd'}, inplace=True)
+
+            keep_cols = ['GeoInd'] + [col for col in list(output) if col.startswith('geo_pr') or col.startswith('here')]
+
+            output[keep_cols].to_pickle(os.path.join(outdir, geo_file + '.pkl'))
+
         else:
             print("{}.pkl already exists.".format(
-                os.path.join(outdir, geo_file)))
+                os.path.join(outdir, geo_file + '.pkl')))
