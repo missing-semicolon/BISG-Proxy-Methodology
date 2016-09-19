@@ -54,8 +54,6 @@ def create(indir, outdir):
             output['NH_Mult_Total'] = output['NH_Mult_Total'] - (np.sum(
                 output[['NH_White_Other', 'NH_Black_Other', 'NH_AIAN_Other', 'NH_Asian_HPI', 'NH_API_Other', 'NH_Asian_HPI_Other']], axis=1))
 
-            print(output['NH_Mult_Total'])
-
             # Verify the steps above by confirming that the Total Population
             # still matches.
             assert np.array_equal(output['Total_Pop'].values,
@@ -90,9 +88,6 @@ def create(indir, outdir):
             # When updating geocoded race probabilities, we require the probability that someone of a particular race lives in that block group, tract, or ZIP code.
             # Our race counts are single race reported counts, therefore we divide the single race population within each block by the total single race population
             # for each group.
-
-            pop_totals_df['NH_Mult_Total'] = pop_totals_df[-1] - \
-                pop_totals_df[:-1].sum()
 
             output['here'] = output['Total_Pop'] / \
                 pop_totals_df['Total_Pop']
