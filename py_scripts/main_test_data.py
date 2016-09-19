@@ -7,7 +7,7 @@ import os
 
 import surname_creation_lower
 import create_attr_over18_all_geo_entities
-
+import surname_parser
 
 
 def main():
@@ -25,7 +25,12 @@ def main():
     # Run the script that prepares the analysis version of the census surname list, including the proportions of individuals by race and ethnicities by surname.
     census_surnames_lower = surname_creation_lower.create("../input_files/app_c.csv")
 
-    create_attr_over18_all_geo_entities.create(source_dir, os.path.join(source_dir, 'created_python'))
+    create_attr_over18_all_geo_entities.create(source_dir, census_data)
+
+    # Read in the file that defines the program "name_parse" that contains the name standardization routines and merges surname probabilities
+    # from the census surname list.
+    # See script for details on arguments that need to be supplied to the program.    
+    surname_parser.run()
 
 
 if __name__ == '__main__':
