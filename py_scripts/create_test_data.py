@@ -21,7 +21,7 @@ app_c = pd.read_csv('../input_files/app_c.csv')
 seed(1234)
 
 draw = choice(app_c.shape[0], app_c.shape[0], replace=False)
-name1 = app_c[draw < 100].name
+name1 = app_c[draw < 100].name.reset_index(drop=True)
 
 # Read in surname data and take a random draw of 25 invididuals for
 # coapplicant last name.
@@ -29,7 +29,7 @@ name1 = app_c[draw < 100].name
 seed(5678)
 
 draw = choice(app_c.shape[0], app_c.shape[0], replace=False)
-name2 = app_c[draw < 25].name
+name2 = app_c[draw < 25].name.reset_index(drop=True)
 
 # Read in geography data from census geography files.
 
@@ -50,7 +50,7 @@ merged_geo = merged_geo[merged_geo['State_FIPS10'] != '72']
 
 seed(91011)
 draw = choice(merged_geo.shape[0], merged_geo.shape[0], replace=False)
-geo_sample = merged_geo[draw < 100][['GEOID10_Tract', 'GEOID10_BlkGrp']]
+geo_sample = merged_geo[draw < 100][['GEOID10_Tract', 'GEOID10_BlkGrp']].reset_index(drop=True)
 
 # ZIP code is not strictly nested within census geography.
 # Draw a random sample of ZIP codes, which likely not correspon to the
@@ -65,4 +65,6 @@ zip_df = zip_df[zip_df['ZCTA5'].apply(
 seed(121314)
 
 draw = choice(zip_df.shape[0], zip_df.shape[0], replace=False)
-zip_sample = zip_df[draw < 100]['ZCTA5']
+zip_sample = zip_df[draw < 100]['ZCTA5'].reset_index(drop=True)
+
+sample_data = pd.DataFrame([name1, name2, geo_sample, zip_df])
