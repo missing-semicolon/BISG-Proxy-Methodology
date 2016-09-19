@@ -25,7 +25,7 @@ def main():
     # Run the script that prepares the analysis version of the census surname list, including the proportions of individuals by race and ethnicities by surname.
     census_surnames_lower = surname_creation_lower.create("../input_files/app_c.csv")
 
-    create_attr_over18_all_geo_entities.create(source_dir, os.path.join(out_dir, 'created_python'))
+    create_attr_over18_all_geo_entities.create(source_dir, os.path.join(source_dir, 'created_python'))
 
 
 if __name__ == '__main__':
