@@ -29,8 +29,8 @@ def main():
 
     # Read in the file that defines the program "name_parse" that contains the name standardization routines and merges surname probabilities
     # from the census surname list.
-    # See script for details on arguments that need to be supplied to the program.    
-    surname_parser.run()
+    # See script for details on arguments that need to be supplied to the program.
+    surname_parser.parse(matchvars=, app_lname='name1', coapp_lname='name2', output=out_dir, readdir='../test_output', readfile='fictitious_sample_data.pkl', censusdir=census_data)
 
 
 if __name__ == '__main__':
