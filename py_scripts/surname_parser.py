@@ -51,17 +51,28 @@ def clean_last_names(df):
     df['lname'] = df['lname'].apply(lambda x: single_space.sub("", x))
 
     # Split hyphenated last names, then match race separately on each part.
-    df[['lname1', 'lname2']] = df['lname'].apply(lambda x: pd.Series(x.split('-')))
+
+    def min_split(x, splitter, min_len):
+        out = x.split(splitter)
+        if len(out) < min_len:
+            out.append(None)
+            return out
+        else:
+            return out
+
+    df[['lname1', 'lname2']] = df['lname'].apply(lambda x: pd.Series(min_split(x, '-', 2)))
 
     return df
 
 
 def create_race_probs_by_person(df, census, matchvars=[], keepvars=[]):
     census_keeps = ['pctwhite', 'pctblack', 'pctapi', 'pctaian', 'pcthispanic', 'pct2prace']
+
     for i in ['1', '2']:
         df = df.merge(census, how='left', left_on='lname' + i, right_on='name')
         df = df.rename(columns={c: c + i for c in census_keeps})
-    out_vars = matchvars + \
+
+    out_vars = matchvars + ['appl_coapp_cd_enum'] + \
         [('').join(x) for x in itertools.product(['lname'] + census_keeps, ['1', '2'])] + \
         keepvars
 
@@ -92,4 +103,4 @@ def parse(app_lname, coapp_lname, output, readdir, readfile, censusdir, matchvar
 
     race_probs_by_person = create_race_probs_by_person(clean_data, census_df, matchvars=matchvars, keepvars=keepvars)
 
-    pass
+    print(race_probs_by_person.head())
