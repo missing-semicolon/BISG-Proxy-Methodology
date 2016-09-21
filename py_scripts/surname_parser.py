@@ -49,6 +49,7 @@ def clean_last_names(df):
     # Remove all spaces.
     single_space = re.compile("[ ]")
     df['lname'] = df['lname'].apply(lambda x: single_space.sub("", x))
+    print("3. Cleaned lname in.")
 
     # Split hyphenated last names, then match race separately on each part.
 
@@ -61,6 +62,7 @@ def clean_last_names(df):
             return out
 
     df[['lname1', 'lname2']] = df['lname'].apply(lambda x: pd.Series(min_split(x, '-', 2)))
+    print("4. Processed hyphens in.")
 
     return df
 
@@ -76,7 +78,30 @@ def create_race_probs_by_person(df, census, matchvars=[], keepvars=[]):
         [('').join(x) for x in itertools.product(['lname'] + census_keeps, ['1', '2'])] + \
         keepvars
 
+    print ("5. Matched race probabilities in.")
+
     return df[out_vars]
+
+
+def create_reshaped_race_probs_by_app(df, matchvars=[], keepvars=[]):
+    assert 'appl_coapp_cd_enum' in list(df)
+
+    def subset_by_appl_cd(df, code):
+
+        df = df[df['appl_coapp_cd_enum'] == code.upper()]
+        df = df.rename(columns={pct: code.lower() + '_' + pct for pct in list(df) if pct.startswith('pct')})
+        df = df.rename(columns={keeper: code.lower() + '_' + keeper for keeper in ['lname1', 'lname2'] + keepvars})
+        df = df.drop('appl_coapp_cd_enum', axis=1)
+
+        return df
+
+    coapps = subset_by_appl_cd(df, 'C')
+    apps = subset_by_appl_cd(df, 'A')
+
+    output = apps.merge(coapps, how='left', on=matchvars)
+    print('6. Reorganized data in.')
+    
+    return output
 
 
 def parse(app_lname, coapp_lname, output, readdir, readfile, censusdir, matchvars=[], keepvars=[]):
@@ -103,4 +128,4 @@ def parse(app_lname, coapp_lname, output, readdir, readfile, censusdir, matchvar
 
     race_probs_by_person = create_race_probs_by_person(clean_data, census_df, matchvars=matchvars, keepvars=keepvars)
 
-    print(race_probs_by_person.head())
+    reshaped_race_probs_by_app = create_reshaped_race_probs_by_app(race_probs_by_person, matchvars=matchvars, keepvars=keepvars)
