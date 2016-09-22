@@ -2,6 +2,7 @@ import os
 import re
 import itertools
 import pandas as pd
+import numpy as np
 
 
 def read_input_data(readdir, readfile):
@@ -56,7 +57,7 @@ def clean_last_names(df):
     def min_split(x, splitter, min_len):
         out = x.split(splitter)
         if len(out) < min_len:
-            out.append(None)
+            out.append(np.NaN)
             return out
         else:
             return out
@@ -100,8 +101,47 @@ def create_reshaped_race_probs_by_app(df, matchvars=[], keepvars=[]):
 
     output = apps.merge(coapps, how='left', on=matchvars)
     print('6. Reorganized data in.')
-    
+
     return output
+
+
+def create_name_match_variables(df):
+    for k in ['a', 'c']:
+        for i in ['1', '2']:
+            df['namematch_' + k + i] = df[k + '_pctwhite' + i].notnull() * 1
+
+    def create_namematch_any(x):
+
+        if x['c_lname2'] in list(x[['a_lname1', 'a_lname2', 'c_lname1']]):
+            x['namematch_c2'] = 0
+
+        if x['c_lname1'] in list(x[['a_lname1', 'a_lname2']]):
+            x['namematch_c1'] = 0
+
+        if x['a_lname2'] in list(x[['a_lname1']]):
+            x['namematch_a2'] = 0
+
+        x['namematch_any'] = x[['namematch_a1', 'namematch_a2', 'namematch_c1', 'namematch_c2']].max()
+
+        return x
+
+    df = df.apply(lambda x: create_namematch_any(x), axis=1)
+
+    def replace_nomatch_pct_with_zero(x):
+
+        races = ['hispanic', 'white', 'black', 'api', 'aian', '2prace']
+        for k in ['a', 'c']:
+            for i in ['1', '2']:
+                if x['namematch_' + k + i] == 0:
+                    for race in races:
+                        x[k + '_pct' + race + i] = 0
+
+        return x
+
+    df = df.apply(lambda x: replace_nomatch_pct_with_zero(x), axis=1)
+
+    print("7. Set up namematch variables.")
+    return df
 
 
 def parse(app_lname, coapp_lname, output, readdir, readfile, censusdir, matchvars=[], keepvars=[]):
@@ -129,3 +169,13 @@ def parse(app_lname, coapp_lname, output, readdir, readfile, censusdir, matchvar
     race_probs_by_person = create_race_probs_by_person(clean_data, census_df, matchvars=matchvars, keepvars=keepvars)
 
     reshaped_race_probs_by_app = create_reshaped_race_probs_by_app(race_probs_by_person, matchvars=matchvars, keepvars=keepvars)
+
+    reshaped_race_probs_by_app.to_pickle('tmp.pkl')  # UAT
+
+    # Each namematch variable is set to 1 if we matched the given name to the Census file and the name is not a duplicate of a previous name on the application.
+    # If the joint applicants share a name, this name is not providing new information (it is likely a family member), and all additional instances of
+    # the name should be discarded.
+
+    # mismatch_tagged_data = create_name_match_variables(reshaped_race_probs_by_app)
+
+    print(reshaped_race_probs_by_app)
