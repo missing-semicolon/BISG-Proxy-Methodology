@@ -176,6 +176,6 @@ def parse(app_lname, coapp_lname, output, readdir, readfile, censusdir, matchvar
     # If the joint applicants share a name, this name is not providing new information (it is likely a family member), and all additional instances of
     # the name should be discarded.
 
-    # mismatch_tagged_data = create_name_match_variables(reshaped_race_probs_by_app)
+    match_tagged_data = create_name_match_variables(reshaped_race_probs_by_app)
 
-    print(reshaped_race_probs_by_app)
+    print(match_tagged_data.head())
