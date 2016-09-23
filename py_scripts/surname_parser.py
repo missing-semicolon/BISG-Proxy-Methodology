@@ -144,6 +144,18 @@ def create_name_match_variables(df):
     return df
 
 
+def populate_final_surname_probs(df):
+    races = ['hispanic', 'white', 'black', 'api', 'aian', '2prace']
+    for race in races:
+        df.ix[df['namematch_a1'] == 1, 'post_pr_' + race] = df['a_pct' + race + '1']
+        df.ix[(df['namematch_a2'] == 1) & (df['post_pr_' + race].isnull()), 'post_pr_' + race] = df['a_pct' + race + '2']
+        df.ix[(df['namematch_c1'] == 1) & (df['post_pr_' + race].isnull()), 'post_pr_' + race] = df['c_pct' + race + '1']
+        df.ix[(df['namematch_c2'] == 1) & (df['post_pr_' + race].isnull()), 'post_pr_' + race] = df['c_pct' + race + '2']
+
+    print("8. Populated final surname probability based on availability of applicant and coapplicant name")
+    return df
+
+
 def parse(app_lname, coapp_lname, output, readdir, readfile, censusdir, matchvars=[], keepvars=[]):
     print("1. Read files in.")
     input_df = read_input_data(readdir, readfile)
@@ -178,4 +190,9 @@ def parse(app_lname, coapp_lname, output, readdir, readfile, censusdir, matchvar
 
     match_tagged_data = create_name_match_variables(reshaped_race_probs_by_app)
 
-    print(match_tagged_data.head())
+    # Denominator below should be approximately equal to 1. It is added to reduce rounding errors.
+    final_surname_probs = populate_final_surname_probs(match_tagged_data)
+
+    print(final_surname_probs.head())
+
+    return final_surname_probs
