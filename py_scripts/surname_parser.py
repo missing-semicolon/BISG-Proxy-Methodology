@@ -195,4 +195,6 @@ def parse(app_lname, coapp_lname, output, readdir, readfile, censusdir, matchvar
 
     print(final_surname_probs.head())
 
+    final_surname_probs.to_pickle(os.path.join(output, 'proxy_name.pkl'))
+
     return final_surname_probs
