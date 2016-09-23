@@ -22,6 +22,8 @@ def main():
     # Identify the location of the prepared input census files.
     census_data = "../input_files/created_python"
 
+    geo_dir = "../input_files/created_python"
+
     # Run the script that prepares the analysis version of the census surname list, including the proportions of individuals by race and ethnicities by surname.
     census_surnames_lower = surname_creation_lower.create("../input_files/app_c.csv")
 
@@ -30,7 +32,9 @@ def main():
     # Read in the file that defines the program "name_parse" that contains the name standardization routines and merges surname probabilities
     # from the census surname list.
     # See script for details on arguments that need to be supplied to the program.
-    surname_parser.parse(matchvars=[], app_lname='name1', coapp_lname='name2', output=out_dir, readdir='../test_output', readfile='fictitious_sample_data.pkl', censusdir=census_data)
+    surname_probabilities = surname_parser.parse(matchvars=[], app_lname='name1', coapp_lname='name2', output=out_dir, readdir='../test_output', readfile='fictitious_sample_data.pkl', censusdir=census_data)
+
+    geo_name_merger_all_entities_over_18.create(matchvars=[], output=out_dir, readdir='../test_output', readfile='fictitious_sample_data.pkl', geodir=geo_dir, geofile='fictitious_sample_data.pkl', inst_name='test', censusdir=census_data)
 
 
 if __name__ == '__main__':
