@@ -8,6 +8,7 @@ import os
 import surname_creation_lower
 import create_attr_over18_all_geo_entities
 import surname_parser
+import geo_name_merger_all_entities_over_18
 
 
 def main():
@@ -17,7 +18,7 @@ def main():
     source_dir = "../input_files"
 
     # Identify the output directory for processing.
-    out_dir = "../output"
+    out_dir = "../test_output"
 
     # Identify the location of the prepared input census files.
     census_data = "../input_files/created_python"
@@ -34,7 +35,7 @@ def main():
     # See script for details on arguments that need to be supplied to the program.
     surname_probabilities = surname_parser.parse(matchvars=[], app_lname='name1', coapp_lname='name2', output=out_dir, readdir='../test_output', readfile='fictitious_sample_data.pkl', censusdir=census_data)
 
-    geo_name_merger_all_entities_over_18.create(matchvars=[], output=out_dir, readdir='../test_output', readfile='fictitious_sample_data.pkl', geodir=geo_dir, geofile='fictitious_sample_data.pkl', inst_name='test', censusdir=census_data)
+    geo_name_merger_all_entities_over_18.create(matchvars=[], output=out_dir, readdir='../test_output', readfile='proxy_name.pkl', geodir='../test_output', geofile='fictitious_sample_data.pkl', inst_name='test', censusdir=census_data, geo_switch=['zip'])
 
 
 if __name__ == '__main__':
