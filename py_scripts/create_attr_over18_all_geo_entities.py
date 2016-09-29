@@ -15,10 +15,10 @@ def create(indir, outdir):
     geo_files = ['blkgrp', 'tract', 'zip']
     file_stem = '_over18_race_dec10'
     for geo_file in geo_files:
-        geo_file = geo_file + file_stem
-        if not os.path.isfile(os.path.join(outdir, geo_file + '.pkl')):
-            print("Creating {}...".format(geo_file))
-            raw_in = pd.read_stata(os.path.join(indir, geo_file + '.dta'))
+        geo_file_full = geo_file + file_stem
+        if not os.path.isfile(os.path.join(outdir, geo_file_full + '.pkl')):
+            print("Creating {}...".format(geo_file_full))
+            raw_in = pd.read_stata(os.path.join(indir, geo_file_full + '.dta'))
 
             # Step 1: From the SF1, retain population contiguous U.S., Alaska,
             # and Hawaii in order to ensure consistency with the population
@@ -29,7 +29,7 @@ def create(indir, outdir):
             print("Updated Number of State_FIPS10 == 72: {}".format(
                 (output['State_FIPS10'] == '72').sum()))
 
-            if geo_file == 'zip' + file_stem:
+            if geo_file_full == 'zip' + file_stem:
                 print('Initial Number of ZCTA5s beginning with "006","007","008","009": {}'.format(
                     (raw_in['State_FIPS10'].apply(lambda x: x[:3] in ["006", "007", "008", "009"])).sum()))
                 output = raw_in[(raw_in['ZCTA5'].apply(
@@ -104,13 +104,20 @@ def create(indir, outdir):
             output['here_given_hispanic'] = output['Hispanic_Total'] / \
                 pop_totals_df['Hispanic_Total']
 
-            print("Renaming {} to GeoInd.".format(output.columns[0]))
-            output.rename(columns={output.columns[0]: 'GeoInd'}, inplace=True)
+            if geo_file == 'blkgrp':
+                key_ind = 'GEOID10_BlkGrp'
+            elif geo_file == 'tract':
+                key_ind = 'GEOID10_Tract'
+            elif geo_file == 'zip':
+                key_ind = 'ZCTA5'
+
+            print("Renaming {} to GeoInd.".format(key_ind))
+            output.rename(columns={key_ind: 'GeoInd'}, inplace=True)
 
             keep_cols = ['GeoInd'] + [col for col in list(output) if col.startswith('geo_pr') or col.startswith('here')]
 
-            output[keep_cols].to_pickle(os.path.join(outdir, geo_file + '.pkl'))
+            output[keep_cols].to_pickle(os.path.join(outdir, geo_file_full + '.pkl'))
 
         else:
             print("{}.pkl already exists.".format(
-                os.path.join(outdir, geo_file + '.pkl')))
+                os.path.join(outdir, geo_file_full + '.pkl')))
