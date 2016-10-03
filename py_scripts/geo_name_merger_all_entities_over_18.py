@@ -36,7 +36,32 @@ def load_census_file(censusdir, geo_switch, geo_ind_name):
     return df
 
 
-def create(output, readdir, readfile, geodir, geofile, inst_name, censusdir, geo_switch, matchvars=[]):
+def load_orig_data(orig_file_path, matchvars=[]):
+    df = pd.read_pickle(orig_file_path)
+    # for var in matchvars:
+    #     if var == 'index':
+
+    return df
+
+
+def load_surname_data(surname_file_path, matchvars=[]):
+    df = pd.read_pickle(surname_file_path)
+    for var in matchvars:
+        try:
+            assert var in list(df)
+        except:
+            print("The match variable {} is not present in the surname data.".format(var))
+
+    return df
+
+
+def create(output, orig_dir, orig_file, surname_dir, surname_file, censusdir, geo_switch,
+           orig_surname_match=[], surname_census_match=[]):
+
+    print("\n\n\n")
+    print("************************************************")
+    print("************    Creating BISG Data    **********")
+    print("************************************************\n\n\n")
 
     geo_dict = {'blkgrp': 'GEOID10_BlkGrp',
                 'tract': 'GEOID10_Tract',
@@ -44,21 +69,23 @@ def create(output, readdir, readfile, geodir, geofile, inst_name, censusdir, geo
 
     for geo_type in geo_switch:
 
-        print("Merging {}".format(geo_type))
+        print("Merging {} with {}".format(geo_type, surname_file))
 
         geo_ind_name = geo_dict[geo_type]
 
-        proxied_data = merge_geofile_and_readfile_by_matchvars(geofile=os.path.join(geodir, geofile),
-                                                               readfile=os.path.join(readdir, readfile), matchvars=matchvars)
+        orig_data = load_orig_data(os.path.join(orig_dir, orig_file), matchvars=orig_surname_match)
+        print("Loaded Original Data {} (Shape: {})".format(orig_file, orig_data.shape))
 
-        # proxied_data = pd.read_pickle(os.path.join(geodir, geofile))
+        surname_data = load_surname_data(os.path.join(surname_dir, surname_file), surname_census_match)
+        print("Loaded Surname Data {} (Shape: {})".format(surname_file, surname_data.shape))
 
+        merged_surname_data = orig_data.merge(surname_data, how='left', left_index=True, right_index=True)
+        print("Created Merged Surname Data (Shape: {})".format(merged_surname_data.shape))
 
         census_df = load_census_file(censusdir, geo_switch=geo_type, geo_ind_name=geo_dict[geo_type])
+        print("Loaded Census Data {} (Shape: {})".format(geo_type, census_df.shape))
 
+        combined_proxy_and_census = census_df.merge(merged_surname_data, how='inner', left_on=geo_ind_name, right_on=surname_census_match)
+        print("Merged Census Data with Surname Data by {} (Shape: {})".format(geo_ind_name, combined_proxy_and_census.shape))
 
-        combined_proxy_and_census = census_df.merge(proxied_data, how='inner', left_on=geo_ind_name, right_on='zip_sample').reset_index()
-
-        # combined_proxy_and_census = combined_proxy_and_census.merge()
-
-        print(combined_proxy_and_census.head())
+        combined_proxy_and_census.to_pickle('tmp.pkl')  # UAT

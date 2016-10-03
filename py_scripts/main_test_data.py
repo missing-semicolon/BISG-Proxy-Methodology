@@ -35,7 +35,9 @@ def main():
     # See script for details on arguments that need to be supplied to the program.
     surname_probabilities = surname_parser.parse(matchvars=[], app_lname='name1', coapp_lname='name2', output=out_dir, readdir='../test_output', readfile='fictitious_sample_data.pkl', censusdir=census_data)
 
-    geo_name_merger_all_entities_over_18.create(matchvars=[], output=out_dir, readdir='../test_output', readfile='proxy_name.pkl', geodir='../test_output', geofile='fictitious_sample_data.pkl', inst_name='test', censusdir=census_data, geo_switch=['zip'])
+    # geo_name_merger_all_entities_over_18.create(matchvars=[], output=out_dir, readdir='../test_output', readfile='proxy_name.pkl', geodir='../test_output', geofile='fictitious_sample_data.pkl', inst_name='test', censusdir=census_data, geo_switch=['zip'])
+
+    geo_name_merger_all_entities_over_18.create(output=out_dir, orig_dir=out_dir, orig_file='fictitious_sample_data.pkl', surname_dir=out_dir, surname_file='proxy_name.pkl', orig_surname_match=[], surname_census_match=['zip_sample'], censusdir=census_data, geo_switch=['zip'])
 
 
 if __name__ == '__main__':
