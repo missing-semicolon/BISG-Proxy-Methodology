@@ -16,6 +16,7 @@ geo_switch() - string that identifies level of geography used taking the followi
 
 import os
 import pandas as pd
+import numpy as np
 
 
 def merge_geofile_and_readfile_by_matchvars(geofile, readfile, matchvars=[]):
@@ -55,13 +56,41 @@ def load_surname_data(surname_file_path, matchvars=[]):
     return df
 
 
+def rename_post_pr_vars(df):
+    to_rename = [var for var in list(df) if var.startswith('post_pr')]
+    prefix_dict = {var: 'name_pr_' + var[8:] for var in to_rename}
+    df = df.rename(columns=prefix_dict)
+    df = df.rename(columns={'name_pr_2prace': 'name_pr_mult_other'})
+    return df
+
+
+def create_BISG(df):
+    race_list = ['white', 'black', 'aian', 'api', 'mult_other', 'hispanic']
+
+    for race in race_list:
+        df['u_' + race] = df['name_pr_' + race] * df['here_given_' + race]
+
+    df['u_sum'] = np.sum(df[[var for var in list(df) if var.startswith('u_')]], axis=1)
+
+    for race in race_list:
+        df['pr_' + race] = df['u_' + race] / df['u_sum']
+
+    drop_list = [var for var in list(df) if var.startswith('u_') or var.startswith('here_')]
+    df = df.drop(drop_list, axis=1)
+
+    df['prtotal'] = np.sum(df[[var for var in list(df) if var.startswith('pr_')]], axis=1)
+
+    return df
+
+
 def create(output, orig_dir, orig_file, surname_dir, surname_file, censusdir, geo_switch,
            orig_surname_match=[], surname_census_match=[]):
 
     print("\n\n\n")
     print("************************************************")
     print("************    Creating BISG Data    **********")
-    print("************************************************\n\n\n")
+    print("************************************************")
+    print("\n\n\n")
 
     geo_dict = {'blkgrp': 'GEOID10_BlkGrp',
                 'tract': 'GEOID10_Tract',
@@ -88,4 +117,8 @@ def create(output, orig_dir, orig_file, surname_dir, surname_file, censusdir, ge
         combined_proxy_and_census = census_df.merge(merged_surname_data, how='inner', left_on=geo_ind_name, right_on=surname_census_match)
         print("Merged Census Data with Surname Data by {} (Shape: {})".format(geo_ind_name, combined_proxy_and_census.shape))
 
-        combined_proxy_and_census.to_pickle('tmp.pkl')  # UAT
+        combined_proxy_and_census = rename_post_pr_vars(combined_proxy_and_census)
+
+        create_BISG_data = create_BISG(combined_proxy_and_census)
+
+        create_BISG_datacr.to_pickle('tmp.pkl')  # UAT
