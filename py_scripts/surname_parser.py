@@ -182,8 +182,6 @@ def parse(app_lname, coapp_lname, output, readdir, readfile, censusdir, matchvar
 
     reshaped_race_probs_by_app = create_reshaped_race_probs_by_app(race_probs_by_person, matchvars=matchvars, keepvars=keepvars)
 
-    reshaped_race_probs_by_app.to_pickle('tmp.pkl')  # UAT
-
     # Each namematch variable is set to 1 if we matched the given name to the Census file and the name is not a duplicate of a previous name on the application.
     # If the joint applicants share a name, this name is not providing new information (it is likely a family member), and all additional instances of
     # the name should be discarded.
