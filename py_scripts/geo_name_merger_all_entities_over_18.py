@@ -83,6 +83,40 @@ def create_BISG(df):
     return df
 
 
+def check_BISG(df):
+    print("Beginning BISG Sanity Checks...")
+    race_list = ['white', 'black', 'aian', 'api', 'mult_other', 'hispanic']
+
+    for race in race_list:
+        print("All probabilities should be between 0 and 1.")
+        if not df.ix[df['prtotal'] < 0.99].empty:
+            df = df.ix[df['prtotal'] < 0.99, 'pr_' + race] = np.NaN
+
+        print("---Checking name_pr_{}".format(race))
+        assert (((df['name_pr_' + race] >= 0.0) & (df['name_pr_' + race] <= 1.0)) | (df['name_pr_' + race].isnull())).all()
+
+        print("---Checking geo_pr_{}".format(race))
+        assert (((df['geo_pr_' + race] >= 0.0) & (df['geo_pr_' + race] <= 1.0)) | (df['geo_pr_' + race].isnull())).all()
+
+        print("---Checking pr_{}\n".format(race))
+        assert (((df['pr_' + race] >= 0.0) & (df['pr_' + race] <= 1.0)) | (df['pr_' + race].isnull())).all()
+
+    print("Race probabilities should sum to at least 1.")
+    for prob_type in ['name_', 'geo_', '']:
+        print("---Checking sum of probabilities for {}.".format(prob_type + 'pr'))
+        check_type = np.sum(df[[prob_type + 'pr_' + var for var in race_list]], axis=1)
+        assert ((check_type == 0) | ((check_type >= 0.99) & (check_type <= 1.01))).all()
+
+    print("All QC Checks Passed!")
+
+    return df
+
+
+def save_data_to_output(output, orig_data, ds):
+    orig_data = orig_data.split('.')[0]
+    ds.to_pickle(os.path.join(output, orig_data + '_BISG.pkl'))
+
+
 def create(output, orig_dir, orig_file, surname_dir, surname_file, censusdir, geo_switch,
            orig_surname_match=[], surname_census_match=[]):
 
@@ -121,4 +155,6 @@ def create(output, orig_dir, orig_file, surname_dir, surname_file, censusdir, ge
 
         create_BISG_data = create_BISG(combined_proxy_and_census)
 
-        create_BISG_datacr.to_pickle('tmp.pkl')  # UAT
+        final_BISG_data = check_BISG(create_BISG_data)
+
+        save_data_to_output(output, orig_file, final_BISG_data)
