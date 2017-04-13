@@ -42,50 +42,44 @@ It is provided to illustrate how the `main.do` is set up to run the proxy
 building code and does not reflect any particular individual’s or
 institution’s information.
 
-A control script, `/scripts/main.do`, is included to step through the process below.
+A control script, `/py_scripts/main_test_data.py`, is included to step through the process below.
 The user will need to change paths and define parameters as required.
 
-1. Geocode the data in a geocoding software package (for example, ArcGIS)
-   to obtain tract and block group identifiers for each record.
 1. Build name and geography proxies from Census files included in `/input_files`:
    1. Census surname list:
-      1. `/scripts/surname_creation_lower.do`—takes .csv file of census surnames,
+      1. `/py_scripts/surname_creation_lower.py` takes .csv file of census surnames,
          formats surnames to be read as all lower case,
          and imputes any suppressed values.
-         File created by `surname_creation_lower.do`:
-         1. `/input_files/created/census_surnames_lower.dta`
+         File created by `surname_creation_lower.py`:
+         1. `/input_files/created_python/census_surnames_lower.pkl`
       1. In order to prepare the user-defined datasets for use with the Census surname list,
          basic cleaning of surnames using regular expressions and other forms of
          name standardization is reguired.
-         This script exists at: `/scripts/surname_parser.do`.
-         File created by `surname_parser.do` in user-defined directory:
-         1. ````dir'/proxy_name.dta````
+         This script exists at: `/py_scripts/surname_parser.py`.
+         File created by `surname_parser.py` in user-defined directory:
+         1. `test_output/proxy_name.pkl`
    1. Census geographies:
-      1. `/scripts/create_attr_over18_all_geo_entities.do`—uses the base information,
+      1. `/py_scripts/create_attr_over18_all_geo_entities.py` uses the base information,
          for individuals age 18 and older, from the Census flat files for
-         block group, tract, and ZIP code[<sup>1</sup>](#fn-1) and allocates
-         "Some Other Race"[<sup>2</sup>](#fn-2) to each group in proportion.
+         block group, tract, and ZIP code and allocates
+         "Some Other Race" to each group in proportion.
          It creates three files (one each for block group, tract, and ZIP code)
          with geo probabilities for use in proxy:
-         1. `/input_files/created/blkgrp_attr_over18.dta`
-         1. `/input_files/created/tract_attr_over18.dta`
-         1. `/input_files/created/zip_attr_over18.dta`
+         1. `/input_files/created_python/blkgrp_attr_over18.pkl`
+         1. `/input_files/created_python/tract_attr_over18.pkl`
+         1. `/input_files/created_python/zip_attr_over18.pkl`
 1. Calculate the BISG probabilities following the methodology described in
    [“Using Publicly Available Information to Proxy for Unidentified Race and Ethnicity:
    A Methodology and Assessment”][paper].
-   1. `/scripts/geo_name_merger_all_entities_over18.do`—this program
+   1. `/py_scripts/geo_name_merger_all_entities_over18.py`—this program
       creates three files (one each for block group, tract, and ZIP code)
-      with BISG probabilities in user-defined directory:
-      1. ```/`maindir'/`inst_name'_proxied_blkgrp.dta```
-      1. ```/`maindir'/`inst_name'_proxied_tract.dta```
-      1. ```/`maindir'/`inst_name'_proxied_zip.dta```
+      with BISG probabilities in a user-defined directory.
 1. The final step is to merge together the block group, tract, and ZIP code-based BISG proxies
    and choose the most precise proxy given the precision of geocoding,
    e.g. block group (if available), then tract (if available), or ZIP code
-   (if block group and tract unavailable) using:
-   1. `/scripts/combine_probs.do`
-      File created by combine_probs.do in user-defined directory:
-      1. ```/`maindir'/`inst_name'_`file'proxied_final.dta```
+   (if block group and tract unavailable).
+
+The code contained here is inspired by the CFPB-provided Proxy Methodology stata code that is saved here: https://github.com/cfpb/proxy-methodology
 
 Please direct all questions, comments, and suggestions to:
 CFPB_proxy_methodology_comments@cfpb.gov.
